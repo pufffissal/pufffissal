@@ -175,7 +175,7 @@ main {
   border-radius: var(--radius-xl);
   background:
     linear-gradient(110deg, rgba(5, 11, 20, 0.9), rgba(5, 11, 20, 0.42)),
-    url("https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/assets/characters/ashe/skins/base/images/ashe_splash_uncentered_0.jpg")
+    url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Ashe_0.jpg")
       center right / cover;
   box-shadow: var(--shadow);
   overflow: hidden;

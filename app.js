@@ -5,6 +5,9 @@ const CDRAGON_DATA_BASE =
 const CDRAGON_ASSET_BASE =
   "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default";
 const DDRAGON_SPLASH_BASE = "https://ddragon.leagueoflegends.com/cdn/img/champion/splash";
+const DDRAGON_LOADING_BASE = "https://ddragon.leagueoflegends.com/cdn/img/champion/loading";
+const DDRAGON_VERSION_URL = "https://ddragon.leagueoflegends.com/api/versions.json";
+const DEFAULT_DDRAGON_VERSION = "15.10.1";
 const ORIGIN_DATA_URL =
   "https://gist.githubusercontent.com/Kerrders/0067d88dfd982c272e20dcb496f4dbc7/raw/champions.json";
 
@@ -289,20 +292,29 @@ async function loadAtlas() {
 }
 
 async function fetchFreshChampionAtlas() {
-  const [summary, origins] = await Promise.all([
+  const [summary, origins, ddragonVersion] = await Promise.all([
     fetchJson(`${CDRAGON_DATA_BASE}/champion-summary.json`),
     fetchOriginData().catch((error) => {
       console.warn("Origin data unavailable.", error);
       return [];
     }),
+    fetchDDragonVersion().catch((error) => {
+      console.warn("Data Dragon version unavailable.", error);
+      return DEFAULT_DDRAGON_VERSION;
+    }),
   ]);
 
-  return mergeChampionData(summary, origins);
+  return mergeChampionData(summary, origins, ddragonVersion);
 }
 
 async function fetchOriginData() {
   const origins = await fetchJson(ORIGIN_DATA_URL);
   return Array.isArray(origins) ? origins : [];
+}
+
+async function fetchDDragonVersion() {
+  const versions = await fetchJson(DDRAGON_VERSION_URL);
+  return Array.isArray(versions) && versions.length ? versions[0] : DEFAULT_DDRAGON_VERSION;
 }
 
 async function fetchJson(url) {
@@ -313,11 +325,19 @@ async function fetchJson(url) {
   return response.json();
 }
 
-function mergeChampionData(summary, origins) {
+function mergeChampionData(summary, origins, ddragonVersion = DEFAULT_DDRAGON_VERSION) {
   const originLookup = buildOriginLookup(origins);
 
   return summary
-    .filter((champion) => champion && champion.id > 0 && champion.name && champion.alias)
+    .filter(
+      (champion) =>
+        champion &&
+        champion.id > 0 &&
+        champion.name &&
+        champion.alias &&
+        !champion.name.toLowerCase().startsWith("doom bot") &&
+        !champion.alias.toLowerCase().startsWith("ruby_"),
+    )
     .map((champion) => {
       const origin =
         originLookup.get(normalizeKey(champion.alias)) || originLookup.get(normalizeKey(champion.name)) || {};
@@ -337,8 +357,8 @@ function mergeChampionData(summary, origins) {
         lane: normalizeMetaValue(origin.lane),
         resource: normalizeMetaValue(origin.resource),
         releaseDate: origin.releaseDate || null,
-        iconUrl: assetUrl(champion.squarePortraitPath),
-        splashUrl: `${DDRAGON_SPLASH_BASE}/${encodeURIComponent(champion.alias)}_0.jpg`,
+        iconUrl: ddragonIconUrl(champion.alias, ddragonVersion),
+        splashUrl: ddragonSplashUrl(champion.alias),
         shortBio: "",
       };
     })
@@ -439,6 +459,24 @@ function assetUrl(path) {
   return encodeURI(`${CDRAGON_ASSET_BASE}/${cleanPath}`);
 }
 
+function ddragonIconUrl(alias, version) {
+  return `${DDRAGON_ICON_BASE(version)}/${encodeURIComponent(alias)}.png`;
+}
+
+function DDRAGON_ICON_BASE(version) {
+  return `https://ddragon.leagueoflegends.com/cdn/${encodeURIComponent(
+    version || DEFAULT_DDRAGON_VERSION,
+  )}/img/champion`;
+}
+
+function ddragonSplashUrl(alias) {
+  return `${DDRAGON_SPLASH_BASE}/${encodeURIComponent(alias)}_0.jpg`;
+}
+
+function ddragonLoadingUrl(alias) {
+  return `${DDRAGON_LOADING_BASE}/${encodeURIComponent(alias)}_0.jpg`;
+}
+
 function setView(view) {
   state.activeView = view;
   document.querySelectorAll("[data-view-panel]").forEach((panel) => {
@@ -499,17 +537,15 @@ async function fetchChampionDetail(uid) {
 }
 
 function compactChampionDetail(detail) {
-  const baseSkin = Array.isArray(detail.skins)
-    ? detail.skins.find((skin) => skin.isBase) || detail.skins[0] || {}
-    : {};
+  const alias = detail.alias || detail.name || detail.id;
 
   return {
     uid: String(detail.id),
     title: detail.title || "",
     shortBio: detail.shortBio || "",
     roles: Array.isArray(detail.roles) ? detail.roles.filter(Boolean) : [],
-    splashUrl: assetUrl(baseSkin.uncenteredSplashPath || baseSkin.splashPath || baseSkin.tilePath),
-    tileUrl: assetUrl(baseSkin.tilePath),
+    splashUrl: ddragonSplashUrl(alias),
+    tileUrl: ddragonLoadingUrl(alias),
     tacticalInfo: detail.tacticalInfo || null,
     playstyleInfo: detail.playstyleInfo || null,
   };
