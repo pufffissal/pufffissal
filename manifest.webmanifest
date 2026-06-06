@@ -1,0 +1,11 @@
+{
+  "name": "Runeterra Atlas",
+  "short_name": "Runeterra",
+  "description": "Offline-ready League of Legends champion lore and region map explorer.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#050b14",
+  "theme_color": "#07111f",
+  "categories": ["education", "entertainment", "games"],
+  "orientation": "portrait-primary"
+}

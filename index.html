@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="A modern offline-ready League of Legends lore wiki with champion discovery and a visual Runeterra map."
+    />
+    <meta name="theme-color" content="#07111f" />
+    <title>Runeterra Atlas - League Lore Wiki</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+
+    <header class="site-header">
+      <a class="brand" href="#champions" aria-label="Runeterra Atlas home">
+        <span class="brand-mark">RA</span>
+        <span>
+          <strong>Runeterra Atlas</strong>
+          <small>Champion lore wiki</small>
+        </span>
+      </a>
+
+      <nav class="top-nav" aria-label="Primary navigation">
+        <button class="nav-link active" type="button" data-view="champions">Champions</button>
+        <button class="nav-link" type="button" data-view="map">Map</button>
+        <button class="nav-link" type="button" data-view="regions">Regions</button>
+        <button class="nav-link" type="button" data-view="offline">Offline</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Explore the world behind the Rift</p>
+          <h1>Discover every champion, their lore, and where they belong in Runeterra.</h1>
+          <p>
+            Browse the latest League of Legends champion roster, read compact lore summaries,
+            filter by region or role, and use the interactive map to see how Runeterra connects.
+          </p>
+          <div class="hero-actions">
+            <button class="primary-action" type="button" data-view="map">Open the map</button>
+            <button class="ghost-action" type="button" id="quickDownloadButton">Download offline data</button>
+          </div>
+        </div>
+
+        <div class="hero-panel" aria-label="App status">
+          <div class="stat-card">
+            <span id="championCount">...</span>
+            <small>champions loaded</small>
+          </div>
+          <div class="stat-card">
+            <span id="regionCount">14</span>
+            <small>regions and origins</small>
+          </div>
+          <div class="stat-card wide">
+            <span id="offlineStatus">Checking</span>
+            <small id="dataSource">Preparing the atlas</small>
+          </div>
+        </div>
+      </section>
+
+      <section class="controls" aria-label="Champion filters">
+        <label class="search-field">
+          <span>Search</span>
+          <input id="searchInput" type="search" placeholder="Search champions, titles, lore..." autocomplete="off" />
+        </label>
+
+        <label>
+          <span>Region</span>
+          <select id="regionFilter">
+            <option value="all">All regions</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Role</span>
+          <select id="roleFilter">
+            <option value="all">All roles</option>
+          </select>
+        </label>
+      </section>
+
+      <p class="status-line" id="statusLine" role="status">Loading the atlas...</p>
+
+      <section class="view active" id="championsView" data-view-panel="champions">
+        <div class="content-grid">
+          <section class="panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Champion codex</p>
+                <h2>All champions</h2>
+              </div>
+              <span class="result-count" id="resultCount">0 results</span>
+            </div>
+            <div class="champion-grid" id="championGrid" aria-live="polite"></div>
+          </section>
+
+          <aside class="panel detail-panel" id="championDetail" aria-live="polite">
+            <div class="empty-state">
+              <span class="empty-icon">*</span>
+              <h2>Select a champion</h2>
+              <p>Choose any card to read lore, see region origin, roles, and art.</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="mapView" data-view-panel="map">
+        <div class="content-grid map-layout">
+          <section class="panel map-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Visual map</p>
+                <h2>Runeterra regions</h2>
+              </div>
+              <button class="ghost-action compact" type="button" id="resetRegionButton">Show all</button>
+            </div>
+            <div class="map-canvas" id="mapCanvas" aria-label="Stylized map of Runeterra regions"></div>
+          </section>
+
+          <aside class="panel" id="mapRegionDetail" aria-live="polite"></aside>
+        </div>
+      </section>
+
+      <section class="view" id="regionsView" data-view-panel="regions">
+        <section class="panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Origins</p>
+              <h2>Every region and faction</h2>
+            </div>
+          </div>
+          <div class="region-grid" id="regionGrid"></div>
+        </section>
+      </section>
+
+      <section class="view" id="offlineView" data-view-panel="offline">
+        <section class="panel offline-panel">
+          <div>
+            <p class="eyebrow">Offline mode</p>
+            <h2>Download the champion atlas</h2>
+            <p>
+              Save champion bios, origins, icons, and base splash art so the app remains useful
+              when you are traveling or disconnected. The app refreshes from public data sources
+              whenever you come back online.
+            </p>
+          </div>
+
+          <div class="offline-card">
+            <div>
+              <strong id="offlineCardTitle">Offline package not downloaded yet</strong>
+              <span id="offlineCardDescription">Use the button below to cache all available champion data.</span>
+            </div>
+            <button class="primary-action" type="button" id="downloadButton">Download offline data</button>
+          </div>
+
+          <div class="progress-shell" aria-hidden="true">
+            <div class="progress-bar" id="downloadProgress"></div>
+          </div>
+          <p class="download-log" id="downloadLog">Waiting to start.</p>
+        </section>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        Fan-made League of Legends lore explorer. Champion data is loaded from Riot/CommunityDragon
+        assets and supplemental public origin data. Not endorsed by Riot Games.
+      </p>
+    </footer>
+  </body>
+</html>
